@@ -14,13 +14,15 @@
             padding: 20px;
             text-align: center;
         }
-
+        /* コンテンツを最初は非表示にする */
+        .hidden-content {
+            display: none;
+        }
         /* ヘッダーのスタイル */
         header h1 {
             color: #5d4037;
             margin-bottom: 30px;
         }
-
         /* 写真ギャラリーのスタイル */
         .photo-gallery {
             display: grid;
@@ -29,29 +31,25 @@
             margin: 0 auto;
             max-width: 1200px;
         }
-
         /* 写真アイテムのスタイル */
         .photo-item {
             width: 100%;
-            aspect-ratio: 1 / 1; /* 正方形を維持 */
+            aspect-ratio: 1 / 1;
             overflow: hidden;
             border-radius: 12px;
             box-shadow: 0 4px 10px rgba(0,0,0,0.1);
             transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
-        
         .photo-item:hover {
             transform: scale(1.05);
             box-shadow: 0 8px 20px rgba(0,0,0,0.15);
         }
-
         .photo-item img {
             width: 100%;
             height: 100%;
-            object-fit: cover; /* 画像をコンテナに合わせてトリミング */
+            object-fit: cover;
             display: block;
         }
-
         /* メッセージ表示用のスタイル */
         .message {
             margin-top: 50px;
@@ -62,20 +60,45 @@
 </head>
 <body>
 
-    <header>
-        <h1>家族の思い出アルバム</h1>
-    </header>
+    <div id="content" class="hidden-content">
+        <header>
+            <h1>家族の思い出アルバム</h1>
+        </header>
 
-    <main>
-        <div id="photo-gallery" class="photo-gallery">
-            </div>
-        <p id="message-area" class="message"></p>
-    </main>
+        <main>
+            <div id="photo-gallery" class="photo-gallery">
+                </div>
+            <p id="message-area" class="message"></p>
+        </main>
+    </div>
 
     <script>
+        // --- パスワード保護スクリプト ここから ---
+
+        // ▼▼▼ お好きなパスワードに変更してください ▼▼▼
+        const CORRECT_PASSWORD = "Izumi-Nagi";
+        // ▲▲▲ ここまで ▲▲▲
+
+        function checkPassword() {
+            const userInput = prompt("パスワードを入力してください:");
+            if (userInput === CORRECT_PASSWORD) {
+                document.getElementById('content').classList.remove('hidden-content');
+                // パスワードが正しければ、写真の読み込みを開始
+                fetchPhotos();
+            } else if (userInput !== null) { // キャンセルボタン以外が押された場合
+                alert("パスワードが違います。");
+                checkPassword(); // 再度パスワードを要求
+            }
+        }
+
+        // --- パスワード保護スクリプト ここまで ---
+
+
+        // --- Googleフォト連携スクリプト ここから ---
+
         // ▼▼▼ ここにあなたの情報を入力してください ▼▼▼
-        const API_KEY = "ここにあなたのAPIキーを貼り付け";
-        const ALBUM_ID = "ここにあなたのアルバムIDを貼り付け";
+        const API_KEY = "AIzaSyDAHec_VFnSU6qCcq54PgVaEcuod3c4BTQ";
+        const ALBUM_ID = "nSnrHacSkNZRXFDc8";
         // ▲▲▲ ここまで ▲▲▲
 
         async function fetchPhotos() {
@@ -93,15 +116,13 @@
             
             const requestBody = {
                 albumId: ALBUM_ID,
-                pageSize: 100 // 1度に読み込む写真の最大数 (最大100)
+                pageSize: 100
             };
 
             try {
                 const response = await fetch(`${endpoint}?key=${API_KEY}`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(requestBody),
                 });
 
@@ -112,18 +133,14 @@
                 const data = await response.json();
 
                 if (data.mediaItems && data.mediaItems.length > 0) {
-                    messageArea.textContent = ""; // 読み込みメッセージをクリア
+                    messageArea.textContent = "";
                     data.mediaItems.forEach(item => {
-                        // Googleフォトの画像URLにパラメータを追加して、表示サイズを最適化
-                        const imageUrl = `${item.baseUrl}=w400-h400-c`; // 幅400px, 高さ400pxで中央クロップ
-
+                        const imageUrl = `${item.baseUrl}=w400-h400-c`;
                         const photoDiv = document.createElement('div');
                         photoDiv.className = 'photo-item';
-
                         const img = document.createElement('img');
                         img.src = imageUrl;
                         img.alt = item.filename || '家族の写真';
-                        
                         photoDiv.appendChild(img);
                         gallery.appendChild(photoDiv);
                     });
@@ -137,8 +154,8 @@
             }
         }
 
-        // ページが読み込まれたら写真を読み込む
-        document.addEventListener('DOMContentLoaded', fetchPhotos);
+        // ページが読み込まれたら、まずパスワードをチェックする
+        document.addEventListener('DOMContentLoaded', checkPassword);
     </script>
 
 </body>
