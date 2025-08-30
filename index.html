@@ -5,142 +5,66 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>家族の思い出アルバム</title>
     <style>
-        /* 全体のスタイル */
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            background-color: #fdfaf6;
-            color: #333;
-            margin: 0;
-            padding: 20px;
-            text-align: center;
-        }
-        /* コンテンツを最初は非表示にする */
-        .hidden-content {
-            display: none;
-        }
-        /* ヘッダーのスタイル */
-        header h1 {
-            color: #5d4037;
-            margin-bottom: 30px;
-        }
-        /* 写真ギャラリーのスタイル */
-        .photo-gallery {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 15px;
-            margin: 0 auto;
-            max-width: 1200px;
-        }
-        /* 写真アイテムのスタイル */
-        .photo-item {
-            width: 100%;
-            aspect-ratio: 1 / 1;
-            overflow: hidden;
-            border-radius: 12px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-        .photo-item:hover {
-            transform: scale(1.05);
-            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
-        }
-        .photo-item img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: block;
-        }
-        /* メッセージ表示用のスタイル */
-        .message {
-            margin-top: 50px;
-            font-size: 1.2em;
-            color: #888;
-        }
+        /* (スタイル部分は以前と同じです) */
+        body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;background-color:#fdfaf6;color:#333;margin:0;padding:20px;text-align:center}.hidden-content{display:none}header h1{color:#5d4037;margin-bottom:30px}.photo-gallery{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:15px;margin:0 auto;max-width:1200px}.photo-item{width:100%;aspect-ratio:1 / 1;overflow:hidden;border-radius:12px;box-shadow:0 4px 10px rgba(0,0,0,.1);transition:transform .3s ease,box-shadow .3s ease}.photo-item:hover{transform:scale(1.05);box-shadow:0 8px 20px rgba(0,0,0,.15)}.photo-item img{width:100%;height:100%;object-fit:cover;display:block}.message{margin-top:50px;font-size:1.2em;color:#888}
     </style>
 </head>
 <body>
-
     <div id="content" class="hidden-content">
         <header>
             <h1>家族の思い出アルバム</h1>
         </header>
-
         <main>
-            <div id="photo-gallery" class="photo-gallery">
-                </div>
+            <div id="photo-gallery" class="photo-gallery"></div>
             <p id="message-area" class="message"></p>
         </main>
     </div>
 
     <script>
-        // --- パスワード保護スクリプト ここから ---
+        // --- パスワード保護スクリプト ---
+        const CORRECT_PASSWORD = "Izumi-Nagi"; // お好きなパスワードに変更してください
 
-        // ▼▼▼ お好きなパスワードに変更してください ▼▼▼
-        const CORRECT_PASSWORD = "Izumi-Nagi";
+        // ▼▼▼ ここに、Google Apps Scriptで取得したあなたの「ウェブアプリのURL」を貼り付けてください ▼▼▼
+        const MY_API_URL = "https://script.google.com/macros/s/AKfycbxYw0MRcF_se4H2xC78SHfyu78PDB9hBsXZ2iaWOt08Uc4hRf4UNdqPXCkeiJBifmL4_g/exec";
         // ▲▲▲ ここまで ▲▲▲
 
         function checkPassword() {
             const userInput = prompt("パスワードを入力してください:");
             if (userInput === CORRECT_PASSWORD) {
                 document.getElementById('content').classList.remove('hidden-content');
-                // パスワードが正しければ、写真の読み込みを開始
-                fetchPhotos();
-            } else if (userInput !== null) { // キャンセルボタン以外が押された場合
+                fetchPhotosViaProxy();
+            } else if (userInput !== null) {
                 alert("パスワードが違います。");
-                checkPassword(); // 再度パスワードを要求
+                checkPassword();
             }
         }
 
-        // --- パスワード保護スクリプト ここまで ---
-
-
-        // --- Googleフォト連携スクリプト ここから ---
-
-        // ▼▼▼ ここにあなたの情報を入力してください ▼▼▼
-        const API_KEY = "AIzaSyBu3NKgDWRl-E7bLf_tuKJRxWPc_E3hQrc";
-        const ALBUM_ID = "nSnrHacSkNZRXFDc8";
-        // ▲▲▲ ここまで ▲▲▲
-
-        async function fetchPhotos() {
+        async function fetchPhotosViaProxy() {
             const gallery = document.getElementById('photo-gallery');
             const messageArea = document.getElementById('message-area');
 
-            if (!API_KEY || API_KEY === "ここにあなたのAPIキーを貼り付け" || !ALBUM_ID || ALBUM_ID === "ここにあなたのアルバムIDを貼り付け") {
-                messageArea.textContent = "APIキーとアルバムIDを設定してください。";
+            if (!MY_API_URL || MY_API_URL === "ここにあなたのウェブアプリのURLを貼り付け") {
+                messageArea.textContent = "ウェブアプリのURLを設定してください。";
                 return;
             }
 
             messageArea.textContent = "写真を読み込んでいます...";
 
-            const endpoint = 'https://photoslibrary.googleapis.com/v1/mediaItems:search';
-            
-            const requestBody = {
-                albumId: ALBUM_ID,
-                pageSize: 100
-            };
-
             try {
-                const response = await fetch(`${endpoint}?key=${API_KEY}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(requestBody),
-                });
-
-                if (!response.ok) {
-                    throw new Error(`エラーが発生しました: ${response.status} ${response.statusText}`);
-                }
-
+                const response = await fetch(MY_API_URL);
                 const data = await response.json();
 
-                if (data.mediaItems && data.mediaItems.length > 0) {
+                if (data.error) throw new Error(data.error);
+
+                if (data && data.length > 0) {
                     messageArea.textContent = "";
-                    data.mediaItems.forEach(item => {
-                        const imageUrl = `${item.baseUrl}=w400-h400-c`;
+                    data.forEach(item => {
+                        const imageUrl = `${item.url}=w400-h400-c`; // 表示サイズを最適化
                         const photoDiv = document.createElement('div');
                         photoDiv.className = 'photo-item';
                         const img = document.createElement('img');
                         img.src = imageUrl;
-                        img.alt = item.filename || '家族の写真';
+                        img.alt = '家族の写真';
                         photoDiv.appendChild(img);
                         gallery.appendChild(photoDiv);
                     });
@@ -150,13 +74,11 @@
 
             } catch (error) {
                 console.error('写真の取得に失敗しました:', error);
-                messageArea.textContent = "写真の読み込みに失敗しました。APIキーやアルバムIDが正しいか確認してください。";
+                messageArea.textContent = "写真の読み込みに失敗しました。共有アルバムのURLが正しいか確認してください。";
             }
         }
 
-        // ページが読み込まれたら、まずパスワードをチェックする
         document.addEventListener('DOMContentLoaded', checkPassword);
     </script>
-
 </body>
 </html>
