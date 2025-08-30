@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>家族の思い出アルバム</title>
+    <style>
+        /* 全体のスタイル */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #fdfaf6;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            text-align: center;
+        }
+
+        /* ヘッダーのスタイル */
+        header h1 {
+            color: #5d4037;
+            margin-bottom: 30px;
+        }
+
+        /* 写真ギャラリーのスタイル */
+        .photo-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin: 0 auto;
+            max-width: 1200px;
+        }
+
+        /* 写真アイテムのスタイル */
+        .photo-item {
+            width: 100%;
+            aspect-ratio: 1 / 1; /* 正方形を維持 */
+            overflow: hidden;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .photo-item:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+        }
+
+        .photo-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* 画像をコンテナに合わせてトリミング */
+            display: block;
+        }
+
+        /* メッセージ表示用のスタイル */
+        .message {
+            margin-top: 50px;
+            font-size: 1.2em;
+            color: #888;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>家族の思い出アルバム</h1>
+    </header>
+
+    <main>
+        <div id="photo-gallery" class="photo-gallery">
+            </div>
+        <p id="message-area" class="message"></p>
+    </main>
+
+    <script>
+        // ▼▼▼ ここにあなたの情報を入力してください ▼▼▼
+        const API_KEY = "ここにあなたのAPIキーを貼り付け";
+        const ALBUM_ID = "ここにあなたのアルバムIDを貼り付け";
+        // ▲▲▲ ここまで ▲▲▲
+
+        async function fetchPhotos() {
+            const gallery = document.getElementById('photo-gallery');
+            const messageArea = document.getElementById('message-area');
+
+            if (!API_KEY || API_KEY === "ここにあなたのAPIキーを貼り付け" || !ALBUM_ID || ALBUM_ID === "ここにあなたのアルバムIDを貼り付け") {
+                messageArea.textContent = "APIキーとアルバムIDを設定してください。";
+                return;
+            }
+
+            messageArea.textContent = "写真を読み込んでいます...";
+
+            const endpoint = 'https://photoslibrary.googleapis.com/v1/mediaItems:search';
+            
+            const requestBody = {
+                albumId: ALBUM_ID,
+                pageSize: 100 // 1度に読み込む写真の最大数 (最大100)
+            };
+
+            try {
+                const response = await fetch(`${endpoint}?key=${API_KEY}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(requestBody),
+                });
+
+                if (!response.ok) {
+                    throw new Error(`エラーが発生しました: ${response.status} ${response.statusText}`);
+                }
+
+                const data = await response.json();
+
+                if (data.mediaItems && data.mediaItems.length > 0) {
+                    messageArea.textContent = ""; // 読み込みメッセージをクリア
+                    data.mediaItems.forEach(item => {
+                        // Googleフォトの画像URLにパラメータを追加して、表示サイズを最適化
+                        const imageUrl = `${item.baseUrl}=w400-h400-c`; // 幅400px, 高さ400pxで中央クロップ
+
+                        const photoDiv = document.createElement('div');
+                        photoDiv.className = 'photo-item';
+
+                        const img = document.createElement('img');
+                        img.src = imageUrl;
+                        img.alt = item.filename || '家族の写真';
+                        
+                        photoDiv.appendChild(img);
+                        gallery.appendChild(photoDiv);
+                    });
+                } else {
+                    messageArea.textContent = "アルバムに写真がありません。写真を追加してください。";
+                }
+
+            } catch (error) {
+                console.error('写真の取得に失敗しました:', error);
+                messageArea.textContent = "写真の読み込みに失敗しました。APIキーやアルバムIDが正しいか確認してください。";
+            }
+        }
+
+        // ページが読み込まれたら写真を読み込む
+        document.addEventListener('DOMContentLoaded', fetchPhotos);
+    </script>
+
+</body>
+</html>
